@@ -25,7 +25,7 @@
 
 (defn- create-classpath
   "Print .classpath to *out*."
-  [project]
+  [project out-file]
   (let [root (str (unix-path (:root project)) \/)
         noroot  #(trim-leading-str (unix-path %) root)
         [resources-path compile-path source-path test-path]
@@ -50,7 +50,8 @@
                 (element :classpathentry {:kind "lib"
                                           :path (noroot library)}))
               (element :classpathentry {:kind "output"
-                                        :path compile-path})))))
+                                        :path compile-path}))
+     out-file)))
 
 (defn- create-project
   "Print .project to out-file."
@@ -76,10 +77,10 @@
   "Create Eclipse project descriptor files."
   [project]
   (with-open
-      [out-file (file (:root project) ".classpath")]
+      [out-file (java.io.FileWriter. (file (:root project) ".classpath"))]
     (create-classpath project out-file))
   (println "Created .classpath")
   (with-open
-      [out-file (file (:root project) ".project")]
+      [out-file  (java.io.FileWriter. (file (:root project) ".project"))]
     (create-project project out-file))
   (println "Created .project"))
