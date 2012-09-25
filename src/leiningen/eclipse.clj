@@ -1,10 +1,7 @@
 (ns leiningen.eclipse
   "Create Eclipse project descriptor files."
-  (:use [clojure.contrib.duck-streams :only [with-out-writer]])
-  (:use [clojure.contrib.java-utils :only [file]])
-  (:use [clojure.contrib.prxml :only [prxml *prxml-indent*]])
-  (:use [clojure.contrib.str-utils :only [re-sub]])
-  (:use [leiningen.deps :only [deps]])
+  (:use [clojure.java.io :only [file]])
+  (:use [clojure.data.xml :only [emit element]])
   (:import [java.io File])
   (:import [java.util.regex Pattern]))
 
@@ -16,7 +13,7 @@
 ;; copied from jar.clj
 (defn- trim-leading-str
   [s to-trim]
-  (re-sub (re-pattern (str "^" (Pattern/quote to-trim))) "" s))
+  (clojure.string/replace s (re-pattern (str "^" (Pattern/quote to-trim))) ""))
 
 (defn- directory?
   [arg]
@@ -33,58 +30,56 @@
         noroot  #(trim-leading-str (unix-path %) root)
         [resources-path compile-path source-path test-path]
         (map noroot (map project [:resources-path
-				  :compile-path
-				  :source-path
-				  :test-path]))]
-    (prxml [:decl!]
-	   [:classpath
-	    (if (directory? source-path)
-	      [:classpathentry {:kind "src"
-				:path source-path}])
-	    (if (directory? resources-path)
-		[:classpathentry {:kind "src"
-				  :path resources-path}])
-	    (if (directory? test-path)
-	      [:classpathentry {:kind "src"
-				:path test-path}])
-	    [:classpathentry {:kind "con"
-			       :path "org.eclipse.jdt.launching.JRE_CONTAINER"}]
-	    (for [library (list-libraries project)]
-	      [:classpathentry {:kind "lib"
-				:path (noroot library)}])
-	    [:classpathentry {:kind "output"
-			       :path compile-path}]
-	    ])))
+                                  :compile-path
+                                  :source-path
+                                  :test-path]))]
+    (emit
+     (element :classpath {}
+              (if (directory? source-path)
+                (element :classpathentry {:kind "src"
+                                          :path source-path}))
+              (if (directory? resources-path)
+                (element :classpathentry {:kind "src"
+                                          :path resources-path}))
+              (if (directory? test-path)
+                (element :classpathentry {:kind "src"
+                                          :path test-path}))
+              (element :classpathentry {:kind "con"
+                                        :path "org.eclipse.jdt.launching.JRE_CONTAINER"})
+              (for [library (list-libraries project)]
+                (element :classpathentry {:kind "lib"
+                                          :path (noroot library)}))
+              (element :classpathentry {:kind "output"
+                                        :path compile-path})))))
 
 (defn- create-project
-  "Print .project to *out*."
-  [project]
-  (prxml [:decl!]
-	 [:projectDescription
-	  [:name (:name project)]
-	  [:comment (:description project)]
-	  [:projects]
-	  [:buildSpec
-	   [:buildCommand
-	    [:name "ccw.builder"]
-	    [:arguments]]
-	   [:buildCommand
-	    [:name "org.eclipse.jdt.core.javabuilder"]
-	    [:arguments]]]
-	  [:natures
-	   [:nature "ccw.nature"]
-	   [:nature "org.eclipse.jdt.core.javanature"]]]))
+  "Print .project to out-file."
+  [project out-file]
+  (emit
+   (element :projectDescription {}
+     (element :name {} (:name project))
+     (element :comment {} (:description project))
+     (element :projects)
+     (element :buildSpec {}
+              (element :buildCommand {}
+                       (element :name {} "ccw.builder")
+                       (element :arguments))
+              (element :buildCommand {}
+                       (element :name {} "org.eclipse.jdt.core.javabuilder")
+                       (element :arguments)))
+     (element :natures {}
+           (element :nature {} "ccw.nature")
+           (element :nature {} "org.eclipse.jdt.core.javanature")))
+   out-file))
 
 (defn eclipse
   "Create Eclipse project descriptor files."
   [project]
-  (deps project)
-  (binding [*prxml-indent* 2]
-    (with-out-writer
-      (file (:root project) ".classpath")
-      (create-classpath project))
-    (println "Created .classpath")
-    (with-out-writer
-      (file (:root project) ".project")
-      (create-project project))
-    (println "Created .project")))
+  (with-open
+      [out-file (file (:root project) ".classpath")]
+    (create-classpath project out-file))
+  (println "Created .classpath")
+  (with-open
+      [out-file (file (:root project) ".project")]
+    (create-project project out-file))
+  (println "Created .project"))

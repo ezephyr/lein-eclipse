@@ -1,6 +1,8 @@
-(defproject lein-eclipse "1.0.0"
+(defproject lein-eclipse "0.1.0-SNAPSHOT"
   :description "A leiningen plugin to create Eclipse project descriptor files."
-  :dev-dependencies [[org.clojure/clojure "1.1.0"]
-                     [org.clojure/clojure-contrib "1.1.0"]
-                     [leiningen "1.1.0"]
-                     [lein-clojars "0.5.0"]])
+  :url "http://github.com/ezephyr/lein-eclipse"
+  :license {:name "Eclipse Public License"
+            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :dependencies [[org.clojure/clojure "1.4.0"]
+                 [org.clojure/data.xml "0.0.6"]]
+  :eval-in-leiningen true)
