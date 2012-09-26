@@ -1,7 +1,7 @@
 (ns leiningen.eclipse
   "Create Eclipse project descriptor files."
   (:use [clojure.java.io :only [file]])
-  (:use [clojure.data.xml :only [emit element]])
+  (:require [clojure.data.xml :as xml])
   (:import [java.io File])
   (:import [java.util.regex Pattern]))
 
@@ -33,44 +33,44 @@
                                   :compile-path
                                   :source-path
                                   :test-path]))]
-    (emit
-     (element :classpath {}
+    (xml/emit
+     (xml/element :classpath {}
               (if (directory? source-path)
-                (element :classpathentry {:kind "src"
+                (xml/element :classpathentry {:kind "src"
                                           :path source-path}))
               (if (directory? resources-path)
-                (element :classpathentry {:kind "src"
+                (xml/element :classpathentry {:kind "src"
                                           :path resources-path}))
               (if (directory? test-path)
-                (element :classpathentry {:kind "src"
+                (xml/element :classpathentry {:kind "src"
                                           :path test-path}))
-              (element :classpathentry {:kind "con"
+              (xml/element :classpathentry {:kind "con"
                                         :path "org.eclipse.jdt.launching.JRE_CONTAINER"})
               (for [library (list-libraries project)]
-                (element :classpathentry {:kind "lib"
+                (xml/element :classpathentry {:kind "lib"
                                           :path (noroot library)}))
-              (element :classpathentry {:kind "output"
+              (xml/element :classpathentry {:kind "output"
                                         :path compile-path}))
      out-file)))
 
 (defn- create-project
   "Print .project to out-file."
   [project out-file]
-  (emit
-   (element :projectDescription {}
-     (element :name {} (:name project))
-     (element :comment {} (:description project))
-     (element :projects)
-     (element :buildSpec {}
-              (element :buildCommand {}
-                       (element :name {} "ccw.builder")
-                       (element :arguments))
-              (element :buildCommand {}
-                       (element :name {} "org.eclipse.jdt.core.javabuilder")
-                       (element :arguments)))
-     (element :natures {}
-           (element :nature {} "ccw.nature")
-           (element :nature {} "org.eclipse.jdt.core.javanature")))
+  (xml/emit
+   (xml/element :projectDescription {}
+     (xml/element :name {} (:name project))
+     (xml/element :comment {} (:description project))
+     (xml/element :projects)
+     (xml/element :buildSpec {}
+              (xml/element :buildCommand {}
+                       (xml/element :name {} "ccw.builder")
+                       (xml/element :arguments))
+              (xml/element :buildCommand {}
+                       (xml/element :name {} "org.eclipse.jdt.core.javabuilder")
+                       (xml/element :arguments)))
+     (xml/element :natures {}
+           (xml/element :nature {} "ccw.nature")
+           (xml/element :nature {} "org.eclipse.jdt.core.javanature")))
    out-file))
 
 (defn eclipse
