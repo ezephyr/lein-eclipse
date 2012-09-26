@@ -1,4 +1,4 @@
-(defproject lein-eclipse "0.1.0-SNAPSHOT"
+(defproject lein-eclipse "0.2.0"
   :description "A leiningen plugin to create Eclipse project descriptor files."
   :url "http://github.com/ezephyr/lein-eclipse"
   :license {:name "Eclipse Public License"
