@@ -8,20 +8,24 @@
 ;; copied from jar.clj
 (defn- unix-path
   [path]
-  (.replaceAll path "\\\\" "/"))
+  (when path
+    (.replaceAll path "\\\\" "/")))
 
 ;; copied from jar.clj
 (defn- trim-leading-str
   [s to-trim]
-  (clojure.string/replace s (re-pattern (str "^" (Pattern/quote to-trim))) ""))
+  (when s
+    (clojure.string/replace s (re-pattern (str "^" (Pattern/quote to-trim))) "")))
 
 (defn- directory?
   [arg]
-  (.isDirectory (File. arg)))
+  (when arg
+    (.isDirectory (File. arg))))
 
 (defn- list-libraries
   [project]
-  (map #(.getPath %) (.listFiles (File. (:library-path project)))))
+  (when (:library-path project)
+    (map #(when % (.getPath %)) (.listFiles (File. (:library-path project))))))
 
 (defn- create-classpath
   "Print .classpath to *out*."
@@ -46,9 +50,10 @@
                                           :path test-path}))
               (xml/element :classpathentry {:kind "con"
                                         :path "org.eclipse.jdt.launching.JRE_CONTAINER"})
-              (for [library (list-libraries project)]
+              (xml/sexp-as-element
+               (for [library (list-libraries project)]
                 (xml/element :classpathentry {:kind "lib"
-                                          :path (noroot library)}))
+                                          :path (noroot library)})))
               (xml/element :classpathentry {:kind "output"
                                         :path compile-path}))
      out-file)))
